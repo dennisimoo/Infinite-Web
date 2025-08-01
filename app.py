@@ -12,9 +12,9 @@ API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-fl
 
 def generate_content_with_gemini(path_info):
     if path_info and path_info.strip('/'):
-        prompt = f"Create a complete HTML webpage about '{path_info}'. Generate everything - all HTML, CSS, JavaScript, content. Do not include any images. Make it a full webpage experience. Return only HTML that goes inside the body tag."
+        prompt = f"Create a complete HTML webpage about '{path_info}'. Generate everything - all HTML, CSS, JavaScript, content. Do not include any images. IMPORTANT: Include hyperlinks to related subpages using relative URLs like './privacy-policy', './about', './contact', './terms', etc. These links should be relevant to the '{path_info}' topic. Make it a full webpage experience. Return only HTML that goes inside the body tag."
     else:
-        prompt = "Create a complete HTML webpage about any topic you choose. Generate everything - all HTML, CSS, JavaScript, content. Do not include any images. Make it a full webpage experience. Return only HTML that goes inside the body tag."
+        prompt = "Create a complete HTML webpage about any topic you choose. Generate everything - all HTML, CSS, JavaScript, content. Do not include any images. IMPORTANT: Include hyperlinks to related subpages using relative URLs like './privacy-policy', './about', './contact', './terms', etc. These links should be relevant to your chosen topic. Make it a full webpage experience. Return only HTML that goes inside the body tag."
     
     try:
         response = requests.post(
@@ -68,7 +68,18 @@ def home():
 @app.route('/<path:path_info>')
 def dynamic_page(path_info):
     print(f"Generating webpage for: /{path_info}")
-    content = generate_content_with_gemini(path_info)
+    
+    # Check if this is a subpage and provide context
+    path_parts = path_info.split('/')
+    if len(path_parts) > 1:
+        parent_topic = path_parts[0]
+        subpage = '/'.join(path_parts[1:])
+        context_prompt = f"This is a subpage '{subpage}' under the main topic '{parent_topic}'. Create content specifically for this subpage while relating it back to {parent_topic}."
+        full_path_info = f"{path_info} ({context_prompt})"
+    else:
+        full_path_info = path_info
+    
+    content = generate_content_with_gemini(full_path_info)
     response = make_response(render_template('index.html', content=content))
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
@@ -76,4 +87,5 @@ def dynamic_page(path_info):
     return response
 
 if __name__ == '__main__':
-    app.run(host='localhost', port=3000, debug=True)
+    port = int(os.getenv('PORT', 3000))
+    app.run(host='0.0.0.0', port=port, debug=False)

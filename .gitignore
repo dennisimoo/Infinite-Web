@@ -36,6 +36,13 @@ venv.bak/
 *.swo
 *~
 
+# Fly.io
+.fly/
+fly.toml
+fly.toml.bak
+.dockerignore
+fly-deploy.yml
+
 instance/
 .webassets-cache
 

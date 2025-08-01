@@ -2,14 +2,26 @@
 
 AI-generated websites on demand using Gemini 2.0 Flash.
 
+🌐 **Live Demo**: https://infinitewebai.fly.dev/
+
 ## Features
 
 - Visit any path and get a unique AI-generated webpage
 - Every refresh creates completely new content
 - No caching - always fresh AI creativity
 - Pure AI design - no hardcoded styling
+- **Infinite hyperlinks** - AI creates links to subpages that generate more content
+- **Nested navigation** - Follow links to explore infinitely branching content trees
 
-## Usage
+## Live Examples
+
+Try these paths on the live site:
+- https://infinitewebai.fly.dev/ - AI picks any topic
+- https://infinitewebai.fly.dev/cats - AI creates content about cats
+- https://infinitewebai.fly.dev/space/exploration - AI creates space exploration content
+- https://infinitewebai.fly.dev/?gaming - AI creates content about gaming
+
+## Local Development
 
 1. Install dependencies:
 ```bash
@@ -34,4 +46,5 @@ python app.py
 
 ## How it works
 
-The AI generates complete HTML pages including CSS, JavaScript, and content. Every visit triggers a new generation, making each page unique even for the same URL.
+The AI generates complete HTML pages including CSS, JavaScript, and content. Every visit triggers a new generation, making each page unique even for the same URL. The AI also generates hyperlinks to related subpages, creating an infinite web of interconnected content.
+
