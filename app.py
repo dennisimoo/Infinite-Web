@@ -31,20 +31,31 @@ def ratelimit_handler(e):
                          content="<h1>Service Temporarily Unavailable</h1><p>Our website is currently overloaded with requests. Please try again in a few minutes.</p><p>We appreciate your patience!</p>"), 429
 
 # Check which API key is available
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-if OPENAI_API_KEY:
+if OPENROUTER_API_KEY:
+    import openai
+    import httpx
+    openrouter_client = openai.OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=OPENROUTER_API_KEY,
+        http_client=httpx.Client()
+    )
+    API_TYPE = 'openrouter'
+    print("Using Gemini 2.5 Flash via OpenRouter")
+elif OPENAI_API_KEY:
     import openai
     openai.api_key = OPENAI_API_KEY
     API_TYPE = 'openai'
     print("Using OpenAI GPT-4o-mini")
 elif GEMINI_API_KEY:
     API_TYPE = 'gemini'
-    API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
-    print("Using Gemini 2.0 Flash")
+    API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent'
+    print("Using Gemini 2.5 Flash")
 else:
-    raise ValueError("No API key found. Please set either OPENAI_API_KEY or GEMINI_API_KEY in your .env file")
+    raise ValueError("No API key found. Please set either OPENROUTER_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY in your .env file")
 
 def sanitize_input(text):
     """Sanitize user input to prevent XSS attacks"""
@@ -59,16 +70,26 @@ def sanitize_input(text):
 
 def generate_content_with_ai(path_info):
     if path_info and path_info.strip('/'):
-        prompt = f"Create a complete, functional HTML webpage about '{path_info}'. Use a unique, creative UI design different from typical websites - experiment with layouts, color schemes, and visual styles. Vary the page format - it could be an interactive dashboard, a static article, a tool/calculator, a gallery, a form, a game, or any other creative format that fits the topic. Make it functional with working features relevant to the topic. Create specific hyperlinks to subtopics using the current path as a base - for example if the topic is 'food', link to './food/recipes', './food/nutrition', './food/restaurants' etc. Always use the format './{path_info}/subtopic' for links. Make each page completely different and creative. Return only HTML that goes inside the body tag with embedded CSS and JavaScript."
+        prompt = f"Create a focused HTML webpage about '{path_info}'. Focus on ONE main concept - if it's '/game', create ONE specific game with related components (score, controls, levels). If it's '/calculator', create ONE calculator with related functions. Be more interactive and creative - add animations, hover effects, dynamic content, or unique interactions. All components should relate to the main topic. Use completely unique themes and backgrounds each time - dark modes, bright colors, gradients, patterns, textures. Create navigation links to related subtopics using './{path_info}/subtopic' format. Make it cohesive, creative, and focused on the main idea. Return ONLY HTML code for inside the body tag with embedded CSS and JavaScript - no explanations."
     else:
-        prompt = "Create a complete, functional HTML webpage about any interesting topic you choose. Use a unique, creative UI design different from typical websites - experiment with layouts, color schemes, and visual styles. Vary the page format - it could be an interactive dashboard, a static article, a tool/calculator, a gallery, a form, a game, or any other creative format that fits the topic. Make it functional with working features relevant to the topic. Create specific hyperlinks to subtopics using your chosen topic as a base - for example if you choose 'space', link to './space/planets', './space/missions', './space/facts' etc. Make each page completely different and creative. Return only HTML that goes inside the body tag with embedded CSS and JavaScript."
+        prompt = "Create a focused HTML webpage about any interesting topic you choose. Focus on ONE main concept with related components that work together. Be more interactive and creative - add animations, hover effects, dynamic content, or unique interactions. Use completely unique themes and backgrounds each time - dark modes, bright colors, gradients, patterns, textures. Create navigation links to related subtopics using './topic/subtopic' format. Make it cohesive, creative, and focused on the main idea. Return ONLY HTML code for inside the body tag with embedded CSS and JavaScript - no explanations."
     
     # Sanitize the path_info to prevent injection attacks
     safe_path_info = sanitize_input(path_info) if path_info else ""
     
     try:
         logger.info(f"Generating content for sanitized path: {safe_path_info}")
-        if API_TYPE == 'openai':
+        if API_TYPE == 'openrouter':
+            response = openrouter_client.chat.completions.create(
+                model="google/gemini-2.5-flash",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7
+            )
+            content = response.choices[0].message.content
+            
+        elif API_TYPE == 'openai':
             response = openai.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
