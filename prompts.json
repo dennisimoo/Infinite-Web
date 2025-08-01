@@ -2,16 +2,18 @@
   "base_prompt": [
     "Create a focused HTML webpage{topic_text}.",
     "",
-    "Focus on ONE main concept - if it's '/game', create ONE specific game with related components (score, controls, levels). If it's '/calculator', create ONE calculator with related functions.",
+    "CREATIVITY BOOST: Make it EXTREMELY creative and visually stunning! Use wild animations, particle effects, morphing shapes, interactive elements that respond to mouse movement, dynamic color schemes that change, unique layouts that break conventional design, experimental typography, and immersive experiences. Think like a digital artist - make something that would go viral on creative coding showcases.",
+    "",
+    "Focus on ONE main concept - if it's '/game', create ONE specific game with related components (score, controls, levels). If it's '/calculator', create ONE calculator with related functions. But make it spectacular - games with mesmerizing visuals, calculators that feel like sci-fi control panels with glowing buttons and holographic displays.",
     "",
     "Be more interactive and creative - add animations, hover effects, dynamic content, or unique interactions if you want. All components should relate to the main topic.",
     "",
-    "Use completely unique themes and backgrounds each time - dark modes, bright colors, gradients, patterns, textures.",
+    "Use completely unique themes and backgrounds each time - dark modes, bright colors, gradients, patterns, textures. Try bold visual themes like cyberpunk neon, retro synthwave, organic nature-inspired, futuristic glass, dark gothic, bright pop art, minimal zen, or chaotic abstract. Make every page feel like entering a different universe.",
     "",
-    "Create navigation links to related subtopics using '{nav_format}' format. Current path: '{current_path}'. CRITICAL RULES: 1) ALL LINKS MUST START WITH './' - use './subtopic' for simple links or './{current_path}/deeper' for hierarchical paths. For example, if on '/galaxy', use './planets' or './galaxy/formation', NOT 'planets/system'. 2) NEVER repeat any word from the current path '{current_path}' in your links. 3) Maximum 4 path levels total. 4) Links should be creative buttons/cards. 5) Use 1-5 links total (minimum 1, maximum 5).",
+    "CONTEXTUAL LINKING UPGRADE: Instead of generic navigation, embed links naturally within the content context. Current path: '{current_path}'. If you're showing a recipe for pasta, link to './food/italian/recipes' or './cooking/techniques/boiling'. If discussing space, link to './astronomy/galaxies/spiral' or './physics/gravity'. Links should feel like natural extensions of the content, not separate navigation sections. Use 1-2 slashes typically, max 4 total levels (./category/subcategory/specific/detail). NEVER repeat words from current path '{current_path}'. Make 2-5 contextual links that enhance the user's journey and make them want to explore deeper.",
     "",
     "IMPORTANT: Only use images if you know they exist and are publicly accessible - avoid placeholder images or unsplash URLs that might not work.",
     "",
-    "Return ONLY content that goes INSIDE the <body> tag - do NOT include <!DOCTYPE html>, <html>, <head>, or <body> tags. Just return the div/content with embedded <style> and <script> tags. No comments in code (no /* */ or // comments), no extra spaces, no explanations. Maximum 5 navigation links per page."
+    "Return ONLY content that goes INSIDE the <body> tag - do NOT include <!DOCTYPE html>, <html>, <head>, or <body> tags. Just return the div/content with embedded <style> and <script> tags. Structure your HTML in complete elements (close each <div>, <p>, <section> properly) for better streaming. No comments in code (no /* */ or // comments), no extra spaces, no explanations. Maximum 5 navigation links per page. Push creative boundaries! Make sure I can scroll down and up in your page that you generate."
   ]
 }
