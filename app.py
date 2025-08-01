@@ -98,7 +98,7 @@ def generate_content_with_ai(path_info):
                 data = response.json()
                 content = data['candidates'][0]['content']['parts'][0]['text']
             else:
-                return f"<h1>Error generating content</h1><p>API returned status code: {response.status_code}</p>"
+                return "<h1>Service Temporarily Unavailable</h1><p>Our website is currently overloaded with requests. Please try again in a few minutes.</p><p>We appreciate your patience!</p>"
         
         # Clean up any markdown formatting
         content = content.replace('```html', '').replace('```', '').strip()
