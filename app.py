@@ -7,40 +7,65 @@ load_dotenv()
 
 app = Flask(__name__)
 
+# Check which API key is available
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-def generate_content_with_gemini(path_info):
+if OPENAI_API_KEY:
+    import openai
+    openai.api_key = OPENAI_API_KEY
+    API_TYPE = 'openai'
+    print("Using OpenAI GPT-4o-mini")
+elif GEMINI_API_KEY:
+    API_TYPE = 'gemini'
+    API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+    print("Using Gemini 2.0 Flash")
+else:
+    raise ValueError("No API key found. Please set either OPENAI_API_KEY or GEMINI_API_KEY in your .env file")
+
+def generate_content_with_ai(path_info):
     if path_info and path_info.strip('/'):
         prompt = f"Create a complete HTML webpage about '{path_info}'. Generate everything - all HTML, CSS, JavaScript, content. Do not include any images. IMPORTANT: Include hyperlinks to related subpages using relative URLs like './privacy-policy', './about', './contact', './terms', etc. These links should be relevant to the '{path_info}' topic. Make it a full webpage experience. Return only HTML that goes inside the body tag."
     else:
         prompt = "Create a complete HTML webpage about any topic you choose. Generate everything - all HTML, CSS, JavaScript, content. Do not include any images. IMPORTANT: Include hyperlinks to related subpages using relative URLs like './privacy-policy', './about', './contact', './terms', etc. These links should be relevant to your chosen topic. Make it a full webpage experience. Return only HTML that goes inside the body tag."
     
     try:
-        response = requests.post(
-            API_URL,
-            headers={
-                'Content-Type': 'application/json',
-                'X-goog-api-key': GEMINI_API_KEY
-            },
-            json={
-                'contents': [{
-                    'parts': [{
-                        'text': prompt
+        if API_TYPE == 'openai':
+            response = openai.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=16000
+            )
+            content = response.choices[0].message.content
+            
+        elif API_TYPE == 'gemini':
+            response = requests.post(
+                API_URL,
+                headers={
+                    'Content-Type': 'application/json',
+                    'X-goog-api-key': GEMINI_API_KEY
+                },
+                json={
+                    'contents': [{
+                        'parts': [{
+                            'text': prompt
+                        }]
                     }]
-                }]
-            }
-        )
+                }
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                content = data['candidates'][0]['content']['parts'][0]['text']
+            else:
+                return f"<h1>Error generating content</h1><p>API returned status code: {response.status_code}</p>"
         
-        if response.status_code == 200:
-            data = response.json()
-            content = data['candidates'][0]['content']['parts'][0]['text']
-            # Clean up any markdown formatting
-            content = content.replace('```html', '').replace('```', '').strip()
-            return content
-        else:
-            return f"<h1>Error generating content</h1><p>API returned status code: {response.status_code}</p>"
-    
+        # Clean up any markdown formatting
+        content = content.replace('```html', '').replace('```', '').strip()
+        return content
+        
     except Exception as e:
         return f"<h1>Error</h1><p>Failed to generate content: {str(e)}</p>"
 
@@ -58,7 +83,7 @@ def home():
     path_display = f"/?{query_param}" if query_param else "/"
     print(f"Generating webpage for: {path_display}")
     
-    content = generate_content_with_gemini(query_param)
+    content = generate_content_with_ai(query_param)
     response = make_response(render_template('index.html', content=content))
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
@@ -79,7 +104,7 @@ def dynamic_page(path_info):
     else:
         full_path_info = path_info
     
-    content = generate_content_with_gemini(full_path_info)
+    content = generate_content_with_ai(full_path_info)
     response = make_response(render_template('index.html', content=content))
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'

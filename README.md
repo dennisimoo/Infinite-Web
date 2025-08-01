@@ -28,10 +28,19 @@ Try these paths on the live site:
 pip install -r requirements.txt
 ```
 
-2. Add your Gemini API key to `.env`:
+2. Add your API key to `.env` (choose one):
+
+**Option A - OpenAI GPT-4o-mini (recommended):**
 ```
-GEMINI_API_KEY=your_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
 ```
+
+**Option B - Google Gemini 2.0 Flash:**
+```
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+The app automatically detects which API key is available and uses the appropriate service.
 
 3. Run the Flask app:
 ```bash
