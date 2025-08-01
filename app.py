@@ -70,9 +70,9 @@ def sanitize_input(text):
 
 def generate_content_with_ai(path_info):
     if path_info and path_info.strip('/'):
-        prompt = f"Create a focused HTML webpage about '{path_info}'. Focus on ONE main concept - if it's '/game', create ONE specific game with related components (score, controls, levels). If it's '/calculator', create ONE calculator with related functions. Be more interactive and creative - add animations, hover effects, dynamic content, or unique interactions. All components should relate to the main topic. Use completely unique themes and backgrounds each time - dark modes, bright colors, gradients, patterns, textures. Create navigation links to related subtopics using './{path_info}/subtopic' format. Make it cohesive, creative, and focused on the main idea. Return ONLY clean HTML code for inside the body tag with embedded CSS and JavaScript - no comments, no extra spaces, no explanations."
+        prompt = f"Create a focused HTML webpage about '{path_info}'. Focus on ONE main concept - if it's '/game', create ONE specific game with related components (score, controls, levels). If it's '/calculator', create ONE calculator with related functions. Be more interactive and creative - add animations, hover effects, dynamic content, or unique interactions. All components should relate to the main topic. Use completely unique themes and backgrounds each time - dark modes, bright colors, gradients, patterns, textures. Create navigation links to related subtopics using './{path_info}/subtopic' format. Make it cohesive, creative, and focused on the main idea. Return ONLY functional HTML code for inside the body tag with embedded CSS and JavaScript. No comments in code (no /* */ or // comments), no extra spaces, no explanations. Code must just work - no one will read it."
     else:
-        prompt = "Create a focused HTML webpage about any interesting topic you choose. Focus on ONE main concept with related components that work together. Be more interactive and creative - add animations, hover effects, dynamic content, or unique interactions. Use completely unique themes and backgrounds each time - dark modes, bright colors, gradients, patterns, textures. Create navigation links to related subtopics using './topic/subtopic' format. Make it cohesive, creative, and focused on the main idea. Return ONLY clean HTML code for inside the body tag with embedded CSS and JavaScript - no comments, no extra spaces, no explanations."
+        prompt = "Create a focused HTML webpage about any interesting topic you choose. Focus on ONE main concept with related components that work together. Be more interactive and creative - add animations, hover effects, dynamic content, or unique interactions. Use completely unique themes and backgrounds each time - dark modes, bright colors, gradients, patterns, textures. Create navigation links to related subtopics using './topic/subtopic' format. Make it cohesive, creative, and focused on the main idea. Return ONLY functional HTML code for inside the body tag with embedded CSS and JavaScript. No comments in code (no /* */ or // comments), no extra spaces, no explanations. Code must just work - no one will read it."
     
     # Sanitize the path_info to prevent injection attacks
     safe_path_info = sanitize_input(path_info) if path_info else ""
@@ -144,7 +144,18 @@ def home():
     query_param = sanitize_input(query_param)
     
     path_display = f"/?{query_param}" if query_param else "/"
-    real_ip = request.headers.get('X-Forwarded-For', get_remote_address())
+    # Get the real IP from headers - try multiple methods
+    real_ip = None
+    if 'CF-Connecting-IP' in request.headers:
+        real_ip = request.headers['CF-Connecting-IP']
+    elif 'X-Forwarded-For' in request.headers:
+        # Get the last IP in the chain (original client)
+        ips = request.headers['X-Forwarded-For'].split(',')
+        real_ip = ips[-1].strip()
+    elif 'X-Real-IP' in request.headers:
+        real_ip = request.headers['X-Real-IP']
+    else:
+        real_ip = get_remote_address()
     logger.info(f"Home route accessed: {path_display} from IP: {real_ip}")
     
     content = generate_content_with_ai(query_param)
@@ -158,7 +169,18 @@ def home():
 def dynamic_page(path_info):
     # Sanitize path_info immediately
     path_info = sanitize_input(path_info)
-    real_ip = request.headers.get('X-Forwarded-For', get_remote_address())
+    # Get the real IP from headers - try multiple methods
+    real_ip = None
+    if 'CF-Connecting-IP' in request.headers:
+        real_ip = request.headers['CF-Connecting-IP']
+    elif 'X-Forwarded-For' in request.headers:
+        # Get the last IP in the chain (original client)
+        ips = request.headers['X-Forwarded-For'].split(',')
+        real_ip = ips[-1].strip()
+    elif 'X-Real-IP' in request.headers:
+        real_ip = request.headers['X-Real-IP']
+    else:
+        real_ip = get_remote_address()
     logger.info(f"Dynamic page accessed: /{path_info} from IP: {real_ip}")
     
     # Check if this is a subpage and provide context
