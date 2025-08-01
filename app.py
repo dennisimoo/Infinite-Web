@@ -1,11 +1,34 @@
 from flask import Flask, render_template, request, make_response
 import requests
 import os
+import re
+import logging
+import bleach
 from dotenv import load_dotenv
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 load_dotenv()
 
 app = Flask(__name__)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Rate limiting
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["100 per hour"]
+)
+
+# Custom error handler for rate limit exceeded
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    logger.warning(f"Rate limit exceeded for IP: {get_remote_address()}")
+    return render_template('index.html', 
+                         content="<h1>Service Temporarily Unavailable</h1><p>Our website is currently overloaded with requests. Please try again in a few minutes.</p><p>We appreciate your patience!</p>"), 429
 
 # Check which API key is available
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
@@ -23,13 +46,28 @@ elif GEMINI_API_KEY:
 else:
     raise ValueError("No API key found. Please set either OPENAI_API_KEY or GEMINI_API_KEY in your .env file")
 
+def sanitize_input(text):
+    """Sanitize user input to prevent XSS attacks"""
+    if not text:
+        return ""
+    # Remove any potentially dangerous characters and HTML tags
+    cleaned = bleach.clean(text, tags=[], attributes={}, strip=True)
+    # Additional safety: remove any remaining script-like content
+    cleaned = re.sub(r'<script[^>]*>.*?</script>', '', cleaned, flags=re.IGNORECASE | re.DOTALL)
+    cleaned = re.sub(r'javascript:', '', cleaned, flags=re.IGNORECASE)
+    return cleaned.strip()
+
 def generate_content_with_ai(path_info):
     if path_info and path_info.strip('/'):
         prompt = f"Create a complete HTML webpage about '{path_info}'. Generate everything - all HTML, CSS, JavaScript, content. Do not include any images. IMPORTANT: Include hyperlinks to related subpages using relative URLs like './privacy-policy', './about', './contact', './terms', etc. These links should be relevant to the '{path_info}' topic. Make it a full webpage experience. Return only HTML that goes inside the body tag."
     else:
         prompt = "Create a complete HTML webpage about any topic you choose. Generate everything - all HTML, CSS, JavaScript, content. Do not include any images. IMPORTANT: Include hyperlinks to related subpages using relative URLs like './privacy-policy', './about', './contact', './terms', etc. These links should be relevant to your chosen topic. Make it a full webpage experience. Return only HTML that goes inside the body tag."
     
+    # Sanitize the path_info to prevent injection attacks
+    safe_path_info = sanitize_input(path_info) if path_info else ""
+    
     try:
+        logger.info(f"Generating content for sanitized path: {safe_path_info}")
         if API_TYPE == 'openai':
             response = openai.chat.completions.create(
                 model="gpt-4o-mini",
@@ -67,11 +105,12 @@ def generate_content_with_ai(path_info):
         return content
         
     except Exception as e:
-        return f"<h1>Error</h1><p>Failed to generate content: {str(e)}</p>"
+        logger.error(f"Content generation failed: {str(e)}")
+        return "<h1>Service Temporarily Unavailable</h1><p>Our website is currently overloaded with requests. Please try again later.</p>"
 
 @app.route('/')
 def home():
-    # Check for query parameters
+    # Check for query parameters and sanitize them
     query_param = request.args.get('query') or request.args.get('prompt') or ''
     for key, value in request.args.items():
         if key not in ['query', 'prompt'] and value:
@@ -80,8 +119,11 @@ def home():
     if not query_param:
         query_param = next(iter(request.args.keys()), '') if request.args else ''
     
+    # Sanitize the query parameter
+    query_param = sanitize_input(query_param)
+    
     path_display = f"/?{query_param}" if query_param else "/"
-    print(f"Generating webpage for: {path_display}")
+    logger.info(f"Home route accessed: {path_display} from IP: {get_remote_address()}")
     
     content = generate_content_with_ai(query_param)
     response = make_response(render_template('index.html', content=content))
@@ -92,7 +134,9 @@ def home():
 
 @app.route('/<path:path_info>')
 def dynamic_page(path_info):
-    print(f"Generating webpage for: /{path_info}")
+    # Sanitize path_info immediately
+    path_info = sanitize_input(path_info)
+    logger.info(f"Dynamic page accessed: /{path_info} from IP: {get_remote_address()}")
     
     # Check if this is a subpage and provide context
     path_parts = path_info.split('/')
