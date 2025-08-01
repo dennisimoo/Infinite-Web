@@ -1,0 +1,17 @@
+{
+  "base_prompt": [
+    "Create a focused HTML webpage{topic_text}.",
+    "",
+    "Focus on ONE main concept - if it's '/game', create ONE specific game with related components (score, controls, levels). If it's '/calculator', create ONE calculator with related functions.",
+    "",
+    "Be more interactive and creative - add animations, hover effects, dynamic content, or unique interactions if you want. All components should relate to the main topic.",
+    "",
+    "Use completely unique themes and backgrounds each time - dark modes, bright colors, gradients, patterns, textures.",
+    "",
+    "Create navigation links to related subtopics using '{nav_format}' format. Current path: '{current_path}'. CRITICAL RULES: 1) ALL LINKS MUST START WITH './' - use './subtopic' for simple links or './{current_path}/deeper' for hierarchical paths. For example, if on '/galaxy', use './planets' or './galaxy/formation', NOT 'planets/system'. 2) NEVER repeat any word from the current path '{current_path}' in your links. 3) Maximum 4 path levels total. 4) Links should be creative buttons/cards. 5) Use 1-5 links total (minimum 1, maximum 5).",
+    "",
+    "IMPORTANT: Only use images if you know they exist and are publicly accessible - avoid placeholder images or unsplash URLs that might not work.",
+    "",
+    "Return ONLY content that goes INSIDE the <body> tag - do NOT include <!DOCTYPE html>, <html>, <head>, or <body> tags. Just return the div/content with embedded <style> and <script> tags. No comments in code (no /* */ or // comments), no extra spaces, no explanations. Maximum 5 navigation links per page."
+  ]
+}
